@@ -37,7 +37,7 @@ most_least_common <- function(x) {
 most_least_common(c("1", "0", "1", "0", "0")) # c("0", "1")
 most_least_common(c("1", "0", "1", "0")) # c("0", "0")
 
-q5 <- function(input) {
+q3a <- function(input) {
   rates <- input %>%
     map(most_least_common) %>%
     transpose(.names = c("gamma", "epsilon")) %>%
@@ -45,7 +45,7 @@ q5 <- function(input) {
   prod(as.integer(rates))
 }
 
-q5(input_3)
+q3a(input_3)
 
 support_rating <- function(input, support = c("o2", "co2")) {
   index_to_keep <- function(bit_vals, support) {
@@ -82,10 +82,10 @@ support_rating <- function(input, support = c("o2", "co2")) {
 support_rating(test_3, "o2")
 support_rating(test_3, "co2")
 
-q6 <- function(input) {
+q3b <- function(input) {
   o2_rating <- support_rating(input, "o2")
   co2_rating <- support_rating(input, "co2")
   o2_rating * co2_rating
 }
 
-q6(input_3)
+q3b(input_3)
