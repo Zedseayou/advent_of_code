@@ -36,3 +36,41 @@ q2b <- function(input) {
 }
 
 q2b(input_2)
+
+q2_path <- function(input, part){
+  if (part == "a") {
+    position <- input %>%
+      mutate(
+        dx = if_else(direction == "forward", distance, 0),
+        dy = case_when(
+          direction == "up" ~ -distance,
+          direction == "down" ~ distance,
+          TRUE ~ 0
+        ),
+        x = cumsum(dx),
+        y = cumsum(dy)
+      )
+  } else if (part == "b") {
+    position <- input %>%
+      mutate(
+        da = case_when(
+          direction == "up" ~ - distance,
+          direction == "down" ~ distance,
+          TRUE ~ 0
+        ),
+        aim = cumsum(da),
+        dx = if_else(direction == "forward", distance, 0),
+        dy = if_else(direction == "forward", distance * aim, 0),
+        x = cumsum(dx),
+        y = cumsum(dy)
+      )
+  }
+  position %>%
+    ggplot(aes(x, y)) +
+    geom_line() +
+    scale_y_reverse() +
+    theme_minimal()
+}
+
+q2_path(input_2, "a")
+q2_path(input_2, "b")
