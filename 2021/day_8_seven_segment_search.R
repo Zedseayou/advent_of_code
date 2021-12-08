@@ -4,7 +4,7 @@ parse_input <- function(input) {
   input %>%
     enframe(name = NULL) %>%
     separate(value, c("input", "output"), sep = " \\| ") %>%
-    mutate(across(.fns = ~ str_split(.x, " ")))
+    mutate(across(.fns = ~ str_split(.x, " "))) # two column df with vectors of codes
 }
 
 test_8 <- read_lines("acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf
@@ -21,17 +21,17 @@ gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
 
 input_8 <- read_lines("2021/data/input_8.txt") %>% parse_input
 
-uniques <- input_8 %>%
-  pull(output)
-  flatten_chr() %>%
-  str_length()
+q8a <- function(input) {
+  uniques <- input %>%
+    pull(output) %>%
+    flatten_chr() %>%
+    str_length()
 
-sum(uniques %in% c(2, 3, 4, 7))
+  sum(uniques %in% c(2, 3, 4, 7)) # just have to count lengths, no decoding
+}
 
-tibble(
-  num = 0L:9L,
-  n_segments = c(6, 2, 5, 5, 4, 5, 6, 3, 7, 6)
-)
+q8a(test_8)
+q8a(input_8)
 
 
 
@@ -48,19 +48,19 @@ decode_segments <- function(input) {
   n5 <- letters[n == 5]
 
   three_index <- map_lgl(n5, ~ all(seven %in% .x))
-  three <- n5[three_index][[1]]
+  three <- n5[three_index][[1]] # of 2, 3, 5, only 3 has both the right segments
   n5 <- n5[-which(three_index)]
 
   six_index <- map_lgl(n6, ~ !all(one %in% .x))
-  six <- n6[six_index][[1]]
+  six <- n6[six_index][[1]] # of 0, 6, 9, only 6 doesn't have the right segments
   n6 <- n6[-which(six_index)]
 
   five_index <- map_lgl(n5, ~ all(.x %in% six))
-  five <- n5[five_index][[1]]
+  five <- n5[five_index][[1]] # of 2, 5, 5 is contained in 6
   two <- n5[!five_index][[1]]
 
   zero_index <- map_lgl(n6, ~ length(intersect(.x, four)) == 3)
-  zero <- n6[zero_index][[1]]
+  zero <- n6[zero_index][[1]] # zero shares 3 segements with 4, 9 shares 4
   nine <- n6[!zero_index][[1]]
 
   codes <- list(zero, one, two, three, four, five, six, seven, eight, nine) %>%
@@ -80,7 +80,7 @@ calculate_output <- function(input, output) {
     str_split("") %>%
     map_chr(~ .x %>% sort() %>% str_c(collapse = ""))
 
-  codes[out_indexes] %>%
+  codes[out_indexes] %>% # use the sorted codes as indexes to get the output
     str_c(collapse = "") %>%
     as.integer()
 }
