@@ -7,7 +7,7 @@ parse_input <- function(input) {
     mutate(across(.fns = ~ str_split(.x, " "))) # two column df with vectors of codes
 }
 
-test_8 <- read_lines("acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf
+test_08 <- read_lines("acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf
 be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
 edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc
 fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg
@@ -19,7 +19,7 @@ bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbg
 egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
 gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce") %>% parse_input
 
-input_8 <- read_lines("2021/data/input_8.txt") %>% parse_input
+input_8 <- read_lines("2021/data/input_08.txt") %>% parse_input
 
 q8a <- function(input) {
   uniques <- input %>%
@@ -30,8 +30,8 @@ q8a <- function(input) {
   sum(uniques %in% c(2, 3, 4, 7)) # just have to count lengths, no decoding
 }
 
-q8a(test_8)
-q8a(input_8)
+q8a(test_08)
+q8a(input_08)
 
 
 
@@ -71,7 +71,7 @@ decode_segments <- function(input) {
     set_names(codes)
 }
 
-decode_segments(test_8$input[[1]])
+decode_segments(test_08$input[[1]])
 
 calculate_output <- function(input, output) {
   codes <- decode_segments(input)
@@ -85,11 +85,11 @@ calculate_output <- function(input, output) {
     as.integer()
 }
 
-calculate_output(test_8$input[[1]], test_8$output[[1]])
+calculate_output(test_08$input[[1]], test_8$output[[1]])
 
 q8b <- function(input) {
   sum(pmap_int(input, calculate_output))
 }
 
-q8b(test_8[2:11, ])
-q8b(input_8)
+q8b(test_08[2:11, ])
+q8b(input_08)

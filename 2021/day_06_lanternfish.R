@@ -1,8 +1,8 @@
 library(tidyverse)
 library(bit64)
 
-test_6 <- c(3,4,3,1,2)
-input_6 <- read_file("2021/data/input_6.txt") %>%
+test_06 <- c(3,4,3,1,2)
+input_06 <- read_file("2021/data/input_06.txt") %>%
   str_trim() %>%
   str_split(",") %>%
   `[[`(1) %>%
@@ -20,8 +20,8 @@ q6a <- function(input, n_days) {
   length(final_fish)
 }
 
-q6a(test_6, 80)
-q6a(input_6, 80)
+q6a(test_06, 80)
+q6a(input_06, 80)
 
 lanternfish_cycle_2 <- function(n_fish, day) {
   spawning <- n_fish[1]
@@ -46,5 +46,5 @@ q6b <- function(input, n_days) {
   sum(final_fish)
 }
 
-q6b(test_6, 256)
-q6b(input_6, 256)
+q6b(test_06, 256)
+q6b(input_06, 256)

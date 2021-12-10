@@ -1,6 +1,6 @@
 library(tidyverse)
 
-input_1 <- read_csv("2020/data/input_1.txt", col_names = FALSE)
+input_01 <- read_csv("2020/data/input_01.txt", col_names = FALSE)
 
 q1a <- function(input) {
   combos <- combn(x = input$X1, m = 2)
@@ -16,4 +16,4 @@ q1b <- function(input) {
   prod(combos[, index])
 }
 
-q1b(input_1)
+q1b(input_01)

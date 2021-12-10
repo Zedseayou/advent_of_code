@@ -1,6 +1,6 @@
 library(tidyverse)
 
-input_2 <- read_table2("2021/data/input_2.txt", col_names = c("direction", "distance"))
+input_02 <- read_table2("2021/data/input_02.txt", col_names = c("direction", "distance"))
 
 q2a <- function(input){
   position <- input %>%
@@ -16,7 +16,7 @@ q2a <- function(input){
   position$x * position$y
 }
 
-q2a(input_2)
+q2a(input_02)
 
 
 q2b <- function(input) {
@@ -35,7 +35,7 @@ q2b <- function(input) {
   position$x * position$y
 }
 
-q2b(input_2)
+q2b(input_02)
 
 q2_path <- function(input, part){
   if (part == "a") {
@@ -72,5 +72,5 @@ q2_path <- function(input, part){
     theme_minimal()
 }
 
-q2_path(input_2, "a")
-q2_path(input_2, "b")
+q2_path(input_02, "a")
+q2_path(input_02, "b")

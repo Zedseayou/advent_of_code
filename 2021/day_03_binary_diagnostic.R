@@ -1,6 +1,6 @@
 library(tidyverse)
 
-input_3 <- read_lines("2021/data/input_3.txt") %>%
+input_03 <- read_lines("2021/data/input_03.txt") %>%
   enframe(name = NULL) %>%
   separate(value, into = as.character(1:12), sep = "(?<=.)")
 
@@ -45,7 +45,7 @@ q3a <- function(input) {
   prod(as.integer(rates))
 }
 
-q3a(input_3)
+q3a(input_03)
 
 support_rating <- function(input, bit_num, support = c("o2", "co2")) {
   index_to_keep <- function(bit_vals, support) {
@@ -89,4 +89,4 @@ q3b <- function(input) {
   o2_rating * co2_rating
 }
 
-q3b(input_3)
+q3b(input_03)

@@ -6,13 +6,13 @@ parse_input <- function(raw) {
     as.matrix()
 }
 
-test_9 <- parse_input("2199943210
+test_09 <- parse_input("2199943210
 3987894921
 9856789892
 8767896789
 9899965678")
 
-input_9 <- parse_input("2021/data/input_9.txt")
+input_09 <- parse_input("2021/data/input_09.txt")
 
 find_minima <- function(line) {
   line < lag(line, default = Inf) & line < lead(line, default = Inf)
@@ -27,8 +27,8 @@ q9a <- function(input) {
   sum(input[rows & cols] + 1)
 }
 
-q9a(test_9)
-q9a(input_9)
+q9a(test_09)
+q9a(input_09)
 
 apply_line <- function(input, fun, combine) {
   rows <- apply(input, 1, fun) %>% t
@@ -39,19 +39,19 @@ apply_line <- function(input, fun, combine) {
     return(rows | cols)
   }
 }
-apply_line(test_9, find_minima, "and")
+apply_line(test_09, find_minima, "and")
 
 find_basin_potential <- function(line) {
   ((line > lead(line)) | (line > lag(line))) & line != 9
 }
 
-apply_line(test_9, find_basin_potential, "or")
+apply_line(test_09, find_basin_potential, "or")
 
 next_to_basin <- function(basin_line) {
   lead(basin_line, default = FALSE) | lag(basin_line, default = FALSE)
 }
 
-apply_line(apply_line(test_9, find_minima, "and"), next_to_basin, "or")
+apply_line(apply_line(test_09, find_minima, "and"), next_to_basin, "or")
 
 expand_basin <- function(input, basin) {
   potential <- apply_line(input, find_basin_potential, "or")
@@ -62,7 +62,7 @@ expand_basin <- function(input, basin) {
   new_basin
 }
 
-expand_basin(test_9, apply_line(test_9, find_minima, "and"))
+expand_basin(test_09, apply_line(test_9, find_minima, "and"))
 
 find_basin <- function(input) {
   minima <- apply_line(input, find_minima, "and")
@@ -76,7 +76,7 @@ find_basin <- function(input) {
   }
   basin
 }
-find_basin(test_9)
+find_basin(test_09)
 
 basin_size <- function(row, col, basin) {
   basin_members <- list(as.numeric(c(row, col)))
@@ -107,10 +107,10 @@ basin_size <- function(row, col, basin) {
   }
   length(basin_members)
 }
-test_basin <- find_basin(test_9)
+test_basin <- find_basin(test_09)
 basin_size(1L, 2L, test_basin)
 
-q6b <- function(input) {
+q9b <- function(input) {
   basin <- find_basin(input)
   minima <- apply_line(input, find_minima, "and") %>%
     which(arr.ind = TRUE) %>%
@@ -124,5 +124,5 @@ q6b <- function(input) {
     prod()
 }
 
-q6b(test_9)
-q6b(input_9)
+q9b(test_09)
+q9b(input_09)

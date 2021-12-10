@@ -7,8 +7,8 @@ parse_input <- function(input) {
     as.integer()
 }
 
-input_7 <- read_file("2021/data/input_7.txt") %>% parse_input
-test_7 <- "16,1,2,0,4,2,7,1,2,14" %>% parse_input
+input_07 <- read_file("2021/data/input_07.txt") %>% parse_input
+test_07 <- "16,1,2,0,4,2,7,1,2,14" %>% parse_input
 
 cost_of_level <- function(level, input) {
   sum(abs(input - level))
@@ -20,8 +20,8 @@ q7a <- function(input) {
   c(position = which.min(costs) - 1, cost = min(costs))
 }
 
-q7a(test_7)
-q7a(input_7)
+q7a(test_07)
+q7a(input_07)
 
 q7b <- function(input){
   fuel_cost <- function(level, input) {
@@ -32,5 +32,5 @@ q7b <- function(input){
   c(position = which.min(costs) - 1, cost = min(costs))
 }
 
-q7b(test_7)
-q7b(input_7)
+q7b(test_07)
+q7b(input_07)

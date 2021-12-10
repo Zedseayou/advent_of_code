@@ -1,7 +1,7 @@
 library(tidyverse)
 
-input_2 <- read_delim(
-  file = "2020/data/input_2.txt",
+input_02 <- read_delim(
+  file = "2020/data/input_02.txt",
   delim = " ",
   col_names = c("number", "letter", "password")
 )
@@ -26,7 +26,7 @@ q2a <- function(input) {
   sum(validated$valid)
 }
 
-q2a(input_2)
+q2a(input_02)
 
 q2b <- function(input) {
   clean <- input %>%
@@ -47,4 +47,4 @@ q2b <- function(input) {
   sum(validated$match)
 }
 
-q2b(input_2)
+q2b(input_02)

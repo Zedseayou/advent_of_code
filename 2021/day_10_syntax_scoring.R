@@ -89,10 +89,17 @@ q10b <- function(input, debug = FALSE) {
 
   completions <- map(valid_lines, complete_line)
 
-  completions %>%
-    enframe(name = NULL, value = "chars") %>%
+  line_scores <- completions %>%
+    enframe(name = NULL, value = "char") %>%
     rowid_to_column(var = "line_id") %>%
-    unnest(chars) %>%
-    left_join
+    unnest(char) %>%
+    left_join(scores, by = "char") %>%
+    group_by(line_id) %>%
+    summarise(score = reduce(score, ~ (.x * 5) + .y, .init = 0)) %>%
+    ungroup() %>%
+    arrange(score)
 
+  line_scores$score[(nrow(line_scores) + 1) %/% 2]
 }
+q10b(test_10)
+q10b(input_10)

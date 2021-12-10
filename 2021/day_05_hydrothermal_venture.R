@@ -9,9 +9,9 @@ parse_input <- . %>%
     y = map2(y1, y2, seq)
   )
 
-input_5 <- read_lines("2021/data/input_5.txt") %>% parse_input
+input_05 <- read_lines("2021/data/input_05.txt") %>% parse_input
 
-test_5 <- read_lines("0,9 -> 5,9
+test_05 <- read_lines("0,9 -> 5,9
 8,0 -> 0,8
 9,4 -> 3,4
 2,2 -> 2,1
@@ -30,8 +30,8 @@ q5a <- function(input) {
     count(x, y) %>%
     count(n > 1)
 }
-q5a(test_5)
-q5a(input_5)
+q5a(test_05)
+q5a(input_05)
 
 q5b <- function(input) {
   hv <- input %>%
@@ -48,5 +48,5 @@ q5b <- function(input) {
     count(n > 1)
 }
 
-q5b(test_5)
-q5b(input_5)
+q5b(test_05)
+q5b(input_05)
