@@ -77,16 +77,34 @@ flash_step <- function(input) {
     mutate(energy = if_else(flashed, 0, energy))
 }
 
-flash_step(test_11b)
+flash_step(test_11b) %>% view_grid()
 
 
-q11a <- function(input) {
-  boosted <- mutate(input, energy = energy + 1, flashed = FALSE)
-  while(any(boosted$energy > 9L & (!boosted$flashed))) {
-    boosted <- flash_cycle(boosted)
+q11a <- function(input, n_steps) {
+  n_flashes <- 0
+  grid <- input
+  for (step in 1:n_steps) {
+    grid <- flash_step(grid)
+    n_flashes <- n_flashes + sum(grid$flashed)
   }
-  boosted %>%
-    mutate(energy = if_else(flashed, 0, energy))
+  n_flashes
 }
 
-q11a(test_11b) %>% view_grid()
+q11a(test_11, 10)
+q11a(test_11, 100)
+q11a(input_11, 100)
+
+q11b <- function(input) {
+  step <- 0
+  grid <- input
+  n_flashed <- 0
+  while (n_flashed < nrow(input)) {
+    step <- step + 1
+    grid <- flash_step(grid)
+    n_flashed <- sum(grid$flashed)
+  }
+  step
+}
+
+q11b(test_11)
+q11b(input_11)
