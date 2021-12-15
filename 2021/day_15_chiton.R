@@ -7,7 +7,7 @@ parse_input <- function(raw) {
     read_fwf(col_positions = fwf_widths(rep(1, width), col_names = 1:width)) %>%
     rowid_to_column(var = "row") %>%
     pivot_longer(-row, names_to = "col", values_to = "risk", names_transform = list(col = as.integer)) %>%
-    rowid_to_column("node")
+    rowid_to_column("node") # node ID to use to join with edges
 }
 
 test_15 <- parse_input("1163751742
@@ -24,19 +24,19 @@ test_15 <- parse_input("1163751742
 input_15 <- parse_input("2021/data/input_15.txt")
 
 to_tidygraph <- function(nodes) {
-  create_lattice(
+  create_lattice( # creates edges with the right setup instead of doing it manually
     dim = c(max(nodes$row), max(nodes$col)),
     directed = TRUE,
     mutual = TRUE
   ) %>%
     activate(nodes) %>% # this appears to be the right ordering already
-    mutate(node = row_number(), risk = nodes$risk) %>%
+    mutate(node = row_number(), risk = nodes$risk) %>% # technically not needed
     activate(edges) %>%
-    left_join(
+    left_join( # from nodes are just for plotting later
       y = select(nodes, node, row_from = row, col_from = col),
       by = c("from" = "node")
     ) %>%
-    left_join(
+    left_join( # risk should come from the node being entered
       y = rename(nodes, row_to = row, col_to = col),
       by = c("to" = "node")
     ) %>% # can't use .N() in left_join
