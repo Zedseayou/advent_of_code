@@ -99,22 +99,28 @@ q15b <- function(input) {
 q15b(test_15)
 q15b(input_15)
 
-plot_sub_path <- function(input, show_risk = FALSE) {
+plot_sub_path <- function(input, grid = c("risk", "points", "tiles"), size = NULL) {
   path <- input %>%
     to_tidygraph() %>%
     convert(to_shortest_path, from = 1, to = nrow(input), weights = risk) %>%
     activate(edges) %>%
     data.frame()
 
-  if (show_risk) {
-    points <- geom_text(aes(x = col, y = row, label = risk), size = 3)
-  } else {
-    points <- geom_point(aes(x = col, y = row), alpha = 0.2, size = 0.1)
+  if (grid == "risk") {
+    grid_geom <- geom_text(aes(x = col, y = row, label = risk), size = size)
+  } else if (grid == "points") {
+    grid_geom <- geom_point(aes(x = col, y = row), alpha = 0.2, size = size)
+  } else if (grid == "tiles") {
+    lines <- seq(0, max(input$col), length.out = 6) + 0.5
+    grid_geom <- list(
+      geom_vline(xintercept = lines, alpha = 0.2),
+      geom_hline(yintercept = lines, alpha = 0.2)
+    )
   }
 
   input %>%
     ggplot() +
-    points +
+    grid_geom +
     geom_segment(
       mapping = aes(x = col_from, y = row_from, xend = col_to, yend = row_to),
       data = path,
@@ -127,8 +133,13 @@ plot_sub_path <- function(input, show_risk = FALSE) {
     theme_void()
 }
 
-plot_sub_path(test_15, show_risk = TRUE)
-plot_sub_path(input_15)
+plot_sub_path(test_15, grid = "risk", size = 6)
+plot_sub_path(input_15, grid = "points", size = 0.1)
 
-plot_sub_path(tile_grid(test_15), show_risk = TRUE)
-plot_sub_path(tile_grid(test_15))
+plot_sub_path(tile_grid(test_15), grid = "risk", size = 3)
+plot_sub_path(tile_grid(test_15), grid = "tiles")
+plot_sub_path(tile_grid(input_15), grid = "tiles")
+
+x <- list(geom_vline(xintercept = 1:5), geom_hline(yintercept = 1:5))
+
+ggplot(mtcars, aes(x = cyl, y = disp)) + x
