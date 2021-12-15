@@ -115,4 +115,4 @@ q14b <- function(input, n_steps) {
 
 q14b(test_14, 10)
 q14b(input_14, 10)
-q14b(input_14, 40)
+q14b(input_14, 40) %>% as.character()
