@@ -74,16 +74,21 @@ shift_grid_tile <- function(nodes, row_offset, col_offset) {
 
 shift_grid_tile(test_15, 4, 4) %>% pull(col) %>% range()
 
-q15b <- function(input) {
-  nodes <- map2_dfr(
+tile_grid <- function(input) {
+  map2_dfr(
     .x = rep(0:4, each = 5),
     .y = rep(0:4, times = 5),
     .f = ~ shift_grid_tile(input, .x, .y)
   ) %>%
     arrange(row, col) %>%
     mutate(node = row_number())
+}
+tile_grid(test_15)
 
+q15b <- function(input) {
+  nodes <- tile_grid(input)
   graph <- to_tidygraph(nodes)
+
   graph %>%
     convert(to_shortest_path, from = 1, to = nrow(nodes), weights = risk) %>%
     activate(edges) %>%
@@ -94,26 +99,36 @@ q15b <- function(input) {
 q15b(test_15)
 q15b(input_15)
 
-plot_sub_path <- function(input) {
+plot_sub_path <- function(input, show_risk = FALSE) {
   path <- input %>%
     to_tidygraph() %>%
     convert(to_shortest_path, from = 1, to = nrow(input), weights = risk) %>%
     activate(edges) %>%
     data.frame()
 
+  if (show_risk) {
+    points <- geom_text(aes(x = col, y = row, label = risk), size = 3)
+  } else {
+    points <- geom_point(aes(x = col, y = row), alpha = 0.2, size = 0.1)
+  }
+
   input %>%
     ggplot() +
-    # geom_text(aes(x = col, y = row, label = risk)) +
-    geom_point(aes(x = col, y = row), alpha = 0.2, size = 0.1) +
+    points +
     geom_segment(
       mapping = aes(x = col_from, y = row_from, xend = col_to, yend = row_to),
       data = path,
       alpha = 0.5,
       colour = "red"
     ) +
+    # annotate("label", x = 1, y = 1, label = "start") +
+    # annotate("label", x = max(input$col), y = max(input$row), label = "end") +
     scale_y_reverse() +
     theme_void()
 }
 
-plot_sub_path(test_15)
+plot_sub_path(test_15, show_risk = TRUE)
 plot_sub_path(input_15)
+
+plot_sub_path(tile_grid(test_15), show_risk = TRUE)
+plot_sub_path(tile_grid(test_15))
