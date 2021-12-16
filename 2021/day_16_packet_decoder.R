@@ -1,7 +1,9 @@
 library(tidyverse)
+library(usethis)
 
 test_16a <- "D2FE28"
 test_16b <- "38006F45291200"
+test_16c <- "EE00D40C823060"
 
 input_16 <- read_file("2021/data/input_16.txt")
 
@@ -17,6 +19,7 @@ hex_to_bin <- function(hexstr) {
 }
 hex_to_bin(test_16a)
 hex_to_bin(test_16b)
+hex_to_bin(test_16c)
 
 bin_to_int <- function(bits) {
   str_c(bits, collapse = "") %>% strtoi(2)
@@ -24,66 +27,71 @@ bin_to_int <- function(bits) {
 bin_to_int(c("1", "0", "0"))
 
 read_literal <- function(bits) { # only call on a packet I already know is literal
+  stopifnot(length(bits) > 6)
   content <- bits[7:length(bits)]
-  n_pieces <- ceiling(length(content) / 5)
-  pieces <- split(content, rep(1:n_pieces, each = 5, length.out = length(content)))
-  last_piece <- which.max(map_chr(pieces, 1) == "0")
-  value <- pieces[1:last_piece] %>%
-    map(~ .x[-1]) %>%
-    flatten_chr() %>%
-    bin_to_int()
-  list()
+  piece_starts <- seq(1, length(content), by = 5)
+  # last value is 4 after the first 0 that starts a group
+  content_end <- piece_starts[which.max(content[piece_starts] == "0")] + 4
+  # drop the prefixes and return those as the literal value
+  value <- bin_to_int(content[1:content_end][-piece_starts])
+  # return the remaining bits as well
+  bits <- content[-c(1:content_end)]
+  list(value = value, bits = bits)
 }
 read_literal(hex_to_bin(test_16a))
 
-read_operator_0 <- function(bits) {
-  bit_length <- bin_to_int(bits[8:22]) # 15 bits
-  content <- bits[seq(23, length.out = bit_length)]
-  read_literal(content)
+read_operator <- function(bits, length_type_id = c("0", "1"), debug = FALSE) {
+  subpackets <- list()
+
+  if (length_type_id == "0") {
+    # next 15 bits represent length in bits of the sub-packets contained by this packet
+    length <- bin_to_int(bits[8:22])
+    packet_bits <- bits[seq(23, length.out = length)]
+    if (debug) ui_info("Bits: {ui_value(packet_bits)}")
+    while (length(packet_bits) > 0) {
+      subpacket <- read_packet(packet_bits)
+      subpackets <- append(subpackets, list(subpacket))
+      packet_bits <- subpacket[["bits"]]
+      if (debug && length(packet_bits) > 0) ui_info("Bits: {ui_value(packet_bits)}")
+    }
+
+  } else if (length_type_id == "1") {
+    # next 11 bits represent number of sub-packets contained by this packet
+    length <- bin_to_int(bits[8:18])
+    packet_bits <- bits[19:length(bits)]
+    if (debug) ui_info("Bits: {ui_value(packet_bits)}")
+    while (length(subpackets) < length) {
+      subpacket <- read_packet(packet_bits)
+      subpackets <- append(subpackets, list(subpacket))
+      packet_bits <- subpacket[["bits"]]
+      if (debug && length(packet_bits) > 0) ui_info("Bits: {ui_value(packet_bits)}")
+    }
+  }
+  list(length = length, subpackets = subpackets)
 }
 
-read_operator_0(hex_to_bin(test_16b))
-
-
-read_packet <- function(bits) {
+read_packet <- function(bits, debug = FALSE) {
   packet_version <- bin_to_int(bits[1:3])
   packet_type <- bin_to_int(bits[4:6])
 
-  if(packet_type == 4) {
-    out <- list(
-      version = packet_version,
-      type = packet_type,
-      content = read_literal(bits)
+  if (debug) ui_info("Version: {packet_version}, Type: {packet_type}")
+
+  # Literal packets (version, type, value, remaining bits)
+  if (packet_type == 4) {
+    out <- append(
+      list(version = packet_version, type = packet_type),
+      read_literal(bits)
     )
-    return(out)
-  } else {
+  } else { # Operator packets (version, type, length_type, length, subpackets)
     length_type_id <- bits[7]
-    if (length_type_id == "0") {
-       # 15 bits
-    } else if (length_type_id == "1") {
-      contained_n_packets <- bits[8:18] # 11 bits
-    }
+    out <- append(
+      list(version = packet_version, type = packet_type, length_type = length_type_id),
+      read_operator(bits, length_type_id, debug = debug)
+    )
   }
+  out
 }
 read_packet(hex_to_bin(test_16a))
+read_packet(hex_to_bin(test_16b), debug = TRUE)
+read_packet(hex_to_bin(test_16c), debug = TRUE)
 
-
-read_stream <- function(bits) {
-  packet_structure <- list()
-  read <- character()
-  for (b in bits) {
-    read <-c(read, b)
-
-    if (length(read) == 6) {
-      packet_version <- bin_to_int(read[1:3])
-      packet_type <- bin_to_int(read[1:6])
-
-      if (packet_type == 4) {
-
-      }
-
-    }
-
-
-  }
-}
