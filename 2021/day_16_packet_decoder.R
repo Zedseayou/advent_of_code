@@ -27,14 +27,18 @@ hex_to_bin(test_16c)
 hex_to_bin(test_16f) %>% length()
 hex_to_bin(test_16g) %>% length()
 
-bin_to_int <- function(bits) {
-  str_c(bits, collapse = "") %>% strtoi(2)
+# bin_to_int <- function(bits) {
+#   str_c(bits, collapse = "") %>% strtoi(2)
+# }
+bin_to_int <- function(bits) { # strtoi can't handle integers that are too big
+  powers <- rev(seq_along(bits)) - 1
+  sum(as.integer(bits) * 2^powers)
 }
 bin_to_int(c("1", "0", "0"))
 
 debug_bits <- function(bits, debug) {
   n_bits <- length(bits)
-  if (debug) ui_todo("{n_bits} Bits: {ui_value(bits[1:min(c(n_bits, 55))])}{if_else(n_bits > 55, '...', '')}")
+  if (debug) ui_todo("{n_bits} Bits: {ui_value(bits[1:min(c(n_bits, 66))])}{if_else(n_bits > 66, '...', '')}")
 }
 
 read_literal <- function(bits, debug = FALSE) { # only call on a packet I already know is literal
@@ -47,10 +51,14 @@ read_literal <- function(bits, debug = FALSE) { # only call on a packet I alread
   value <- bin_to_int(content[1:content_end][-piece_starts])
   # return the remaining bits as well
   bits <- content[-c(1:content_end)]
+  # browser()
   if(debug) ui_info("Value: {value}, Content: {length(content)}, content_end: {content_end}")
   list(value = value, bits = bits)
 }
 read_literal(hex_to_bin(test_16a))
+
+# Packet from transmission with large value that fails
+read_packet(c('1', '0', '0', '1', '0', '0', '1', '0', '0', '1', '1', '1', '0', '0', '0', '0', '1', '0', '0', '0', '1', '1', '1', '1', '0', '0', '1', '1', '1', '1', '0', '1', '0', '1', '0', '0', '1', '1', '1', '1', '0', '1', '1', '1', '0', '1', '1', '0', '1', '0', '0', '1', '1', '1', '1', '0', '0', '0', '1', '0', '1'))
 
 read_operator <- function(bits, length_type_id = c("0", "1"), debug = FALSE) {
   subpackets <- list()
@@ -135,3 +143,54 @@ q16a(test_16f)
 q16a(test_16g)
 q16a(input_16)
 
+packet_value <- function(packet) {
+  gt <- function(x) as.integer(x[1] > x[2])
+  lt <- function(x) as.integer(x[1] < x[2])
+  eq <- function(x) as.integer(x[1] == x[2])
+  type <- as.character(packet$type)
+  subpackets <- packet$subpackets
+  # browser()
+  value <- switch(
+    as.character(packet$type),
+    "4" = packet$value,
+    "0" = map_dbl(packet$subpackets, packet_value) %>% sum(),
+    "1" = map_dbl(packet$subpackets, packet_value) %>% prod(),
+    "2" = map_dbl(packet$subpackets, packet_value) %>% min(),
+    "3" = map_dbl(packet$subpackets, packet_value) %>% max(),
+    "5" = map_dbl(packet$subpackets, packet_value) %>% gt(),
+    "6" = map_dbl(packet$subpackets, packet_value) %>% lt(),
+    "7" = map_dbl(packet$subpackets, packet_value) %>% eq(),
+    stop("how did you get here")
+  )
+  # browser()
+  # if (is.na(value)) stop("found NA")
+  value
+}
+
+read_packet(hex_to_bin("C200B40A82"))[[5]][[1]] %>% packet_value()
+read_packet(hex_to_bin("C200B40A82")) %>% packet_value()
+
+q16b <- function(input) {
+  packet_tree <- read_packet(hex_to_bin(input))
+  packet_value(packet_tree)
+}
+
+q16b("C200B40A82")
+q16b("04005AC33890")
+q16b("880086C3E88112")
+q16b("CE00C43D881120")
+q16b("D8005AC2A8F0")
+q16b("F600BC2D8F")
+q16b("9C005AC2F8F0")
+q16b("9C0141080250320F1802104A08")
+q16b(input_16)
+
+input_16 %>%
+  hex_to_bin() %>%
+  str_c(collapse = "") %>%
+  str_locate("00110000111110100101111010111101011100011000011")
+
+input_16 %>%
+  hex_to_bin() %>%
+  read_packet(debug = TRUE) %>%
+  invisible()
