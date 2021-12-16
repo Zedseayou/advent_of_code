@@ -32,6 +32,11 @@ bin_to_int <- function(bits) {
 }
 bin_to_int(c("1", "0", "0"))
 
+debug_bits <- function(bits, debug) {
+  n_bits <- length(bits)
+  if (debug) ui_todo("{n_bits} Bits: {ui_value(bits[1:min(c(n_bits, 55))])}{if_else(n_bits > 55, '...', '')}")
+}
+
 read_literal <- function(bits, debug = FALSE) { # only call on a packet I already know is literal
   stopifnot(length(bits) > 6)
   content <- bits[7:length(bits)]
@@ -47,26 +52,18 @@ read_literal <- function(bits, debug = FALSE) { # only call on a packet I alread
 }
 read_literal(hex_to_bin(test_16a))
 
-debug_bits <- function(bits, debug) {
-  n_bits <- length(bits)
-  if (debug) ui_todo("{n_bits} Bits: {ui_value(bits[1:min(c(n_bits, 55))])}{if_else(n_bits > 55, '...', '')}")
-}
-
 read_operator <- function(bits, length_type_id = c("0", "1"), debug = FALSE) {
   subpackets <- list()
 
   if (length_type_id == "0") {
     # next 15 bits represent length in bits of the sub-packets contained by this packet
     length <- bin_to_int(bits[8:22])
-    # if (debug) ui_info("Length Type: {length_type_id} (Bits), Length: {length}")
-    #
+
     subpacket_bits <- bits[seq(23, length.out = length)] # Just the bits in this operator packet
-    browser()
     while (length(subpacket_bits) > 0) {
       subpacket <- read_packet(subpacket_bits, debug = debug)
       subpackets <- append(subpackets, list(subpacket))
       subpacket_bits <- subpacket[["bits"]]
-      # debug_bits(packet_bits, debug)
     }
 
     if (length(bits) ==  23 + length - 1) { # at end of packet, else hits weird boundary
@@ -75,20 +72,15 @@ read_operator <- function(bits, length_type_id = c("0", "1"), debug = FALSE) {
       bits <- bits[(23 + length):length(bits)]
     }
 
-    # debug_bits(bits, debug)
-
   } else if (length_type_id == "1") {
     # next 11 bits represent number of sub-packets contained by this packet
     length <- bin_to_int(bits[8:18])
-    # if (debug) ui_info("Length Type: {length_type_id} (Packets), Length: {length}")
 
     bits <- bits[19:length(bits)]
-    # debug_bits(bits, debug)
     for (s in 1:length) {
       subpacket <- read_packet(bits, debug = debug)
       subpackets <- append(subpackets, list(subpacket))
       bits <- subpacket[["bits"]]
-      # debug_bits(bits, debug)
     }
   }
   list(length = length, subpackets = subpackets, bits = bits)
@@ -98,11 +90,6 @@ read_packet <- function(bits, debug = FALSE) {
   packet_version <- bin_to_int(bits[1:3])
   packet_type <- bin_to_int(bits[4:6])
   debug_bits(bits, debug)
-  # if (debug) {
-  #   # ui_todo("Start Bits: (n={length(bits)}), {ui_value(bits)}")
-  #   ui_done("Version: {packet_version}, Type: {packet_type} ({if_else(packet_type == 4, 'Literal', 'Operator')})")
-  # }
-  # Literal packets (version, type, value, remaining bits)
 
   if (packet_type == 4) {
     out <- append(
@@ -148,33 +135,3 @@ q16a(test_16f)
 q16a(test_16g)
 q16a(input_16)
 
-# not getting rid of this ridiculous debugging
-x <- test_16f %>% hex_to_bin() # off by one error
-read_packet(x)
-names(x)[1:3] <- "V"   # version 6
-names(x)[4:6] <- "T"   # type 0 - operator
-names(x)[7] <- "LT"    # length type 0 (bits)
-names(x)[8:22] <- "L"  # length 84
-names(x)[23:25] <- "V"   # version 0
-names(x)[26:28] <- "T"   # type 0 - operator
-names(x)[29] <- "LT"     # length type 0 (bits)
-names(x)[30:44] <- "L"   # length 22
-names(x)[45:47] <- "V"     # version 0
-names(x)[48:50] <- "T"     # type 4 - literal
-names(x)[51:55] <- "A"     # starts with 0, so value is 10
-names(x)[56:58] <- "V"     # version 6
-names(x)[59:61] <- "T"     # type 4 - literal
-names(x)[62:66] <- "A"     # starts with 0, so value is 11
-names(x)[67:69] <- "V"   # version 4
-names(x)[70:72] <- "T"   # type 0 - operator
-
-y <- hex_to_bin(input_16)[1556:1610] # somehow NA appearing
-names(y)[1:3] <- "V"  # version 2
-names(y)[4:6] <- "T"  # type 0
-names(y)[7] <- "LT"   # length type 0
-names(y)[8:22] <- "L" # 33
-
-
-read_packet(y, debug = TRUE)
-
-bin_to_int(y[8:22])
