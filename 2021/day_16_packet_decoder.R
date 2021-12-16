@@ -42,7 +42,7 @@ read_literal <- function(bits, debug = FALSE) { # only call on a packet I alread
   value <- bin_to_int(content[1:content_end][-piece_starts])
   # return the remaining bits as well
   bits <- content[-c(1:content_end)]
-  if(debug) ui_info("Value: {value}")
+  if(debug) ui_info("Value: {value}, Content: {length(content)}, content_end: {content_end}")
   list(value = value, bits = bits)
 }
 read_literal(hex_to_bin(test_16a))
@@ -59,16 +59,22 @@ read_operator <- function(bits, length_type_id = c("0", "1"), debug = FALSE) {
     # next 15 bits represent length in bits of the sub-packets contained by this packet
     length <- bin_to_int(bits[8:22])
     # if (debug) ui_info("Length Type: {length_type_id} (Bits), Length: {length}")
-
-    packet_bits <- bits[seq(23, length.out = length)] # Just the bits in this operator packet
-    # debug_bits(packet_bits, debug)
-    while (length(packet_bits) > 0) {
-      subpacket <- read_packet(packet_bits, debug = debug)
+    #
+    subpacket_bits <- bits[seq(23, length.out = length)] # Just the bits in this operator packet
+    browser()
+    while (length(subpacket_bits) > 0) {
+      subpacket <- read_packet(subpacket_bits, debug = debug)
       subpackets <- append(subpackets, list(subpacket))
-      packet_bits <- subpacket[["bits"]]
-      debug_bits(packet_bits, debug)
+      subpacket_bits <- subpacket[["bits"]]
+      # debug_bits(packet_bits, debug)
     }
-    bits <- bits[(23 + length):length(bits)] # Need to pass on any other packets
+
+    if (length(bits) ==  23 + length - 1) { # at end of packet, else hits weird boundary
+      bits <- character()
+    } else { # Need to pass on any other packets
+      bits <- bits[(23 + length):length(bits)]
+    }
+
     # debug_bits(bits, debug)
 
   } else if (length_type_id == "1") {
@@ -78,7 +84,7 @@ read_operator <- function(bits, length_type_id = c("0", "1"), debug = FALSE) {
 
     bits <- bits[19:length(bits)]
     # debug_bits(bits, debug)
-    while (length(subpackets) < length) {
+    for (s in 1:length) {
       subpacket <- read_packet(bits, debug = debug)
       subpackets <- append(subpackets, list(subpacket))
       bits <- subpacket[["bits"]]
@@ -142,8 +148,9 @@ q16a(test_16f)
 q16a(test_16g)
 q16a(input_16)
 
-# not getting rid of this ridiculous debugging to find an off by one error
-x <- test_16f %>% hex_to_bin()
+# not getting rid of this ridiculous debugging
+x <- test_16f %>% hex_to_bin() # off by one error
+read_packet(x)
 names(x)[1:3] <- "V"   # version 6
 names(x)[4:6] <- "T"   # type 0 - operator
 names(x)[7] <- "LT"    # length type 0 (bits)
@@ -161,6 +168,13 @@ names(x)[62:66] <- "A"     # starts with 0, so value is 11
 names(x)[67:69] <- "V"   # version 4
 names(x)[70:72] <- "T"   # type 0 - operator
 
-y <- c('0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '0', '0', '0', '0', '1', '1', '0', '1', '1', '0', '0', '0', '1', '0', '1', '0', '0', '1', '1', '1', '0', '0', '0', '0', '0', '1', '0', '1', '0', '0', '1', '0', '0', '0', '1', '0', '1', '0')
+y <- hex_to_bin(input_16)[1556:1610] # somehow NA appearing
+names(y)[1:3] <- "V"  # version 2
+names(y)[4:6] <- "T"  # type 0
+names(y)[7] <- "LT"   # length type 0
+names(y)[8:22] <- "L" # 33
 
-read_packet(y)
+
+read_packet(y, debug = TRUE)
+
+bin_to_int(y[8:22])
