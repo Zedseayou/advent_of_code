@@ -43,6 +43,7 @@ trajectory(10, 2, -1)
 plot_trajectory <- function(t, vx_0, vy_0, target = NULL, zoom = FALSE) {
   s <- trajectory(t, vx_0, vy_0)
   p <- s %>%
+    bind_rows(tibble(x = 0, y = 0)) %>%
     ggplot(aes(x = x, y = y)) +
     geom_point(colour = "red") +
     geom_line(colour = "red", alpha = 0.2) +
@@ -89,7 +90,13 @@ q17a(input_17)
 
 on_target <- function(t, vx_0, vy_0, target) {
   s <- trajectory(t, vx_0, vy_0)
-  which.max(s$x >= target$xmin & s$x <= target$xmax & s$y >= target$ymin & s$y <= target$ymax)
+  hits <- s$x >= target$xmin & s$x <= target$xmax & s$y >= target$ymin & s$y <= target$ymax
+  if (any(hits)) {
+    out <- which.max(hits)
+  } else {
+    out <- 0L
+  }
+  out
 }
 
 on_target(50, 7, 2, test_17)
@@ -120,11 +127,16 @@ q17b <- function(target) {
   # search_space
   t_hit <- pmap_int(search_space, ~ {pb$tick(); on_target(..1, ..2, ..3, target)})
   search_space %>%
-    mutate(hit = hit) %>%
-    filter(hit)
+    mutate(t_hit = t_hit) %>%
+    filter(t_hit > 0L)
 }
 q17b(test_17) -> test_hits
-q17b(input_17) -> x
+q17b(input_17) -> input_hits
 
-vx_0 <- function(x) sqrt( * 2 + 0.25) - 0.25
-min_vx_0(input_17)
+input_hits %>% nrow
+
+plot_trajectory(1, 270, -80, input_17)
+plot_trajectory(83, 23, 40, input_17)
+plot_trajectory(19, 24, 6, input_17)
+
+input_hits %>% filter(vx_0 > 23, vy_0 > 0)
