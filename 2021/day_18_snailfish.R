@@ -206,8 +206,3 @@ q18b <- function(homework) {
 }
 q18b(test_18)
 q18b(input_18)
-
-
-bench::mark(
-  test_18[1:2] %>% sfn_sum()
-)
