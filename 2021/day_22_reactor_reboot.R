@@ -87,51 +87,39 @@ box_volume <- function(box) {
 }
 box_volume(test_22a[[1]])
 
-# For each step, check the intersection with each lit box
-# If there is an intersection, keep the intersection with negative volume
-# If the new box turns on, keep it as well
+# For each new box, calculate intersection with lit boxes and previous overlaps
+# New intersection should be opposite sign of previous
 q22b <- function(step_list) {
   box_list <- list()
-  overlaps <- list()
+  pb <- progress_bar$new(
+    format = "  calculating [:bar] :current/:total (:percent) in :elapsed, eta :eta",
+    total = length(step_list),
+    clear = FALSE
+  )
+  pb$tick(0)
+
   for (step in step_list) {
     for (box in box_list) {
       intersection <- box_intersection(box, step)
       if (!is.null(intersection)) {
-        idx <- detect_index(box_list, ~ identical(.x, intersection))
-        if (idx == 0) {
-          intersection$state <- -1
-          box_list <- append(overlaps, list(intersection))
-        } else {
-          box_list[[idx]]$state <- box_list[[idx]]$state * -1
+        # bro
+        intersection$state <- -1 * box$state
+        box_list <- append(box_list, list(intersection))
         }
-      }
     }
     if (step$state == 1) {
       box_list <- append(box_list, list(step))
     }
+    pb$tick(1)
   }
-  append(box_list, overlaps) %>%
+  box_list %>%
     map_dbl(box_volume) %>%
     sum()
 }
 
 q22b(test_22a)
 q22b(test_22b[1:20])
+q22b(input_22)
 
-list(
-  test_22a[[1]],
-  test_22a[[2]],
-  box_intersection(test_22a[[1]], test_22a[[2]]) %>% `$<-`(state, -1),
-  test_22a[[3]],
-  box_intersection(test_22a[[1]], test_22a[[3]]) %>% `$<-`(state, -1),
-  box_intersection(test_22a[[2]], test_22a[[3]]) %>% `$<-`(state, -1),
-  test_22a[[4]],
-  box_intersection(test_22a[[1]], test_22a[[4]]) %>% `$<-`(state, -1),
-  box_intersection(test_22a[[2]], test_22a[[4]]),
-  box_intersection(test_22a[[3]], test_22a[[4]]) %>% `$<-`(state, -1)
-) %>%
-  compact() %>%
-  map_dbl(box_volume) %>%
-  cumsum()
-
-box_intersection(test_22a[[1]], test_22a[[2]])
+x <- .Last.value
+as.character(x)
