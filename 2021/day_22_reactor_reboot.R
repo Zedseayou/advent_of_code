@@ -17,8 +17,8 @@ parse_input <- function(raw) {
       across(c(xmin:zmax), as.numeric)
     ) %>%
     select(-on_off) %>%
-    rowwise() %>%
-    group_split()
+    as.matrix() %>%
+    split(f = 1:nrow(.))
 }
 
 test_22a <- parse_input("2021/data/test_22a.txt")
@@ -27,8 +27,8 @@ input_22 <- parse_input("2021/data/input_22.txt")
 
 initial <- tibble(x = integer(), y = integer(), z = integer())
 
-do_step <- function(grid, instructions) {
-  c(xmin, xmax, ymin, ymax, zmin, zmax, to_state) %<-% instructions
+do_step <- function(grid, step) {
+  c(xmin, xmax, ymin, ymax, zmin, zmax, to_state) %<-% step
   new_set <- crossing(x = xmin:xmax, y = ymin:ymax, z = zmin:zmax, state = to_state)
   grid %>%
     anti_join(new_set, by = c("x", "y", "z")) %>%
@@ -59,21 +59,19 @@ q22a(test_22b[1:20])
 q22a(input_22[1:20])
 
 box_intersection <- function(box1, box2) {
-  axis_bound_pairs <- tibble(
-    min = c(box1$xmin, box2$xmin, box1$ymin, box2$ymin, box1$zmin, box2$zmin),
-    max = c(box2$xmax, box1$xmax, box2$ymax, box1$ymax, box2$zmax, box1$zmax),
-    conflict = min > max
-  )
-  if (any(axis_bound_pairs$conflict)) {
+  min <- c(box1[1], box2[1], box1[3], box2[3], box1[5], box2[5])
+  max <- c(box1[2], box2[2], box1[4], box2[4], box1[6], box2[6])
+  if (any(min > max)) {
     out <- NULL
   } else {
-    out <- tibble_row(
-      xmin = max(box1$xmin, box2$xmin),
-      xmax = min(box1$xmax, box2$xmax),
-      ymin = max(box1$ymin, box2$ymin),
-      ymax = min(box1$ymax, box2$ymax),
-      zmin = max(box1$zmin, box2$zmin),
-      zmax = min(box1$zmax, box2$zmax),
+    out <- c(
+      max(box1[1], box2[1]), # xmin
+      min(box1[2], box2[2]), # xmax
+      max(box1[3], box2[3]), # ymin
+      min(box1[4], box2[4]), # ymax
+      max(box1[5], box2[5]), # zmin
+      min(box1[6], box2[6]),  # zmax
+      NA_real_
     )
   }
   out
@@ -81,10 +79,16 @@ box_intersection <- function(box1, box2) {
 
 box_intersection(test_22a[[1]], test_22a[[2]])
 
+bench::mark(
+  box_volume(test_22a[[1]]),
+  box_volume2(test_22a[[1]])
+)
+
 box_volume <- function(box) {
-  c(xmin, xmax, ymin, ymax, zmin, zmax, state) %<-% box
-  c(xmax - xmin + 1) * c(ymax - ymin + 1) * c(zmax - zmin + 1) * state
+  # xmin, xmax, ymin, ymax, zmin, zmax, state
+  c(box[2] - box[1] + 1) * c(box[4] - box[3] + 1) * c(box[6] - box[5] + 1) * box[7]
 }
+
 box_volume(test_22a[[1]])
 
 # For each new box, calculate intersection with lit boxes and previous overlaps
@@ -102,12 +106,11 @@ q22b <- function(step_list) {
     for (box in box_list) {
       intersection <- box_intersection(box, step)
       if (!is.null(intersection)) {
-        # bro
-        intersection$state <- -1 * box$state
+        intersection[7] <- -1 * box[7]
         box_list <- append(box_list, list(intersection))
         }
     }
-    if (step$state == 1) {
+    if (step[7] == 1) {
       box_list <- append(box_list, list(step))
     }
     pb$tick(1)
@@ -119,7 +122,6 @@ q22b <- function(step_list) {
 
 q22b(test_22a)
 q22b(test_22b[1:20])
-q22b(input_22)
-
-x <- .Last.value
-as.character(x)
+part_b_result2 <- q22b(input_22)
+part_b_result <- q22b(input_22)
+as.character(part_b_result)
