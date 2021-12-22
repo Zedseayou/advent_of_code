@@ -1,6 +1,5 @@
 library(tidyverse)
 library(zeallot)
-library(progress)
 
 parse_input <- function(raw) {
   lines <- read_lines(raw) %>%
