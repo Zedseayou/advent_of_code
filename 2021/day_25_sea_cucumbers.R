@@ -37,11 +37,6 @@ move_right <- function(input) {
     )
 }
 
-bench::mark(
-  move_right(test_25),
-  move_right2(test_25)
-)
-
 move_down<- function(input) {
   input %>%
     arrange(col, row) %>%
@@ -76,6 +71,7 @@ plot_cucumber <- function(grid) {
   grid %>%
     ggplot() +
     geom_raster(aes(x = col, y = row, fill = cell)) +
+    scale_y_reverse() +
     scale_fill_manual(values = c("#bdbdbd", "#ef8a62", "#67a9cf")) +
     theme_void()
 }
@@ -86,14 +82,38 @@ plot_cucumber(input_25)
 
 q25a <- function(input) {
   old <- input
-  i <- 0
+  grids <- list(input)
   repeat {
     new <- old %>% move_right() %>% move_down()
-    i <- i + 1
+    grids <- append(grids, list(new))
     if (identical(new, old)) {
       break
     }
     old <- new
   }
-  list(i, new)
+  grids
 }
+
+test_out <- q25a(test_25)
+input_out <- q25a(input_25)
+length(input_out) - 1
+
+library(gganimate)
+
+test_gif <- test_out %>%
+  bind_rows(.id = "step") %>%
+  mutate(step = as.integer(step) - 1) %>%
+  plot_cucumber() +
+  transition_manual(frames = step) +
+  ggtitle('Now showing step {current_frame} of {nframes - 1}')
+
+animate(test_gif, nframes = 59, fps = 5, start_pause = 10, end_pause = 10)
+
+input_gif <- input_out %>%
+  bind_rows(.id = "step") %>%
+  mutate(step = as.integer(step) - 1) %>%
+  plot_cucumber() +
+  transition_manual(frames = step) +
+  ggtitle('Now showing step {current_frame} of {nframes - 1}')
+
+animate(input_gif, nframes = 529, fps = 10, start_pause = 10, end_pause = 10)
