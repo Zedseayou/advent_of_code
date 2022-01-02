@@ -39,69 +39,67 @@ q21a(input_21, 1000)
 
 # Each turn:
 
+
+
 q21b <- function(starts) {
   roll_odds <- tibble(
     move = 3:9,
     odds = c(1, 3, 6, 7, 6, 3, 1)
   )
   states <- tibble(
-    player = 1:2,
     position = starts,
     score = 0,
     n_universes = 1
   )
 
-  roll <- function(states, player) {
-    if (player == 1) {
-      out <- states %>%
-        crossing(roll_odds) %>%
-        mutate(
-          position_1 = (position_1 + move) %% 10,
-          position_1 = if_else(position_1 == 0, 10, position_1),
-          score_1 = score_1 + position_1,
-          n_universes = n_universes * odds
-        ) %>%
-        select(n_universes, position_1, position_2, score_1, score_2)
-    } else if (player == 2) {
-      out <- states %>%
-        crossing(roll_odds) %>%
-        mutate(
-          position_2 = (position_2 + move) %% 10,
-          position_2 = if_else(position_2 == 0, 10, position_2),
-          score_2 = score_2 + position_2,
-          n_universes = n_universes * odds
-        ) %>%
-        select(n_universes, position_1, position_2, score_1, score_2)
-    }
-    out
+  roll <- function(states, turn) {
+    states %>%
+      crossing(roll_odds) %>%
+      mutate(
+        position = (position + move) %% 10,
+        position = if_else(position == 0, 10, position),
+        score = score + position,
+        n_universes = n_universes * odds
+      ) %>%
+      group_by(position, score) %>%
+      summarise(n_universes = sum(n_universes), .groups = "drop")
   }
-  roll(states, 1) %>%
-    roll(2) %>%
-    roll(1)
 
-  completed <- tibble()
-  i <- 0
-  while (!is.null(states)) {
-    # browser()
-    states <- roll(states, 1)
-    states_split <- split(states, states$score_1 >= 21)
-    completed <- bind_rows(completed, states_split[["TRUE"]])
-    states <- states_split[["FALSE"]]
-    if (is.null(states)) {
-      break
-    }
-    # browser()
-    states <- roll(states, 2)
-    states_split <- split(states, states$score_2 >= 21)
-    completed <- bind_rows(completed, states_split[["TRUE"]])
-    states <- states_split[["FALSE"]]
-    print(i)
-    i <- i + 1
+  calc_turns <- function(start) {
+    # Max turns definitely less than 21 (if you scored 1 every time, which you can't)
+    accumulate(1:12, roll, .init = start) %>%
+      bind_rows(.id = "turn") %>%
+      mutate(turn = as.integer(turn)) %>%
+      arrange(turn) %>%
+      group_by(turn) %>%
+      summarise( # avoid double counting - only count if you reached 21 that turn
+        n_could_win = sum(n_universes[score >= 21 & score - position < 21]),
+        n_not_won = sum(n_universes[score < 21])
+      )
   }
-  completed %>%
-    group_by(p1_win = score_1 >= 21, p2_win = score_2 >= 21) %>%
-    summarise(n_universes = sum(n_universes) %>% as.character)
+
+  p1_counts <- calc_turns(slice(states, 1))
+  p2_counts <- calc_turns(slice(states, 2))
+
+  p1_counts %>%
+    inner_join(p2_counts, by = "turn", suffix = c("_1", "_2")) %>%
+    mutate(
+      n_p1_wins = n_could_win_1 * lag(n_not_won_2, default = 0),
+      n_p2_wins = n_could_win_2 * n_not_won_1
+    ) %>%
+    summarise(across(ends_with("wins"), ~as.character(sum(.x))))
 }
 
 q21b(test_21)
 q21b(input_21)
+
+# Does player 1 always win?
+combos <- combn(1:10, 2, simplify = FALSE)
+combos <- append(combos, map(combos, rev))
+all_games <- map_dfr(combos, ~ q21b(.x) %>% mutate(p1 = .x[1], p2 = .x[2]))
+all_games %>%
+  mutate(n_p1_wins = as.numeric(n_p1_wins), n_p2_wins = as.numeric(n_p2_wins)) %>%
+  count(n_p1_wins > n_p2_wins) # p2 wins only 6 possible starting situations
+all_games %>%
+  mutate(n_p1_wins = as.numeric(n_p1_wins), n_p2_wins = as.numeric(n_p2_wins)) %>%
+  filter(n_p2_wins > n_p1_wins) # only happens when p2 starts on 1 and p1 starts on 3-8
