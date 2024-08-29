@@ -1,4 +1,8 @@
+# Solution to https://adventofcode.com/2021/day/25
+
 library(tidyverse)
+
+# Input provided as text grid: parse each value into row-col indexed dataframe
 
 parse_input <- function(raw) {
   raw %>%
@@ -12,8 +16,12 @@ parse_input <- function(raw) {
     unnest(c(col, cell))
 }
 
+# These can be downloaded for replication from the linked website
+
 test_25 <- parse_input("2021/data/test_25.txt")
 input_25 <- parse_input("2021/data/input_25.txt")
+
+# For each row, cucumbers can only move if the cell to move into is empty
 
 move_right <- function(input) {
   input %>%
@@ -22,7 +30,7 @@ move_right <- function(input) {
     mutate(
       first_cell = first(cell),
       last_cell = last(cell),
-      right_cell = lead(cell) %>% coalesce(first_cell),
+      right_cell = lead(cell) %>% coalesce(first_cell), # grid wraps around
       left_cell = lag(cell) %>% coalesce(last_cell)
     ) %>%
     ungroup() %>%
@@ -30,8 +38,8 @@ move_right <- function(input) {
       row,
       col,
       cell = case_when(
-        cell == ">" & right_cell == "." ~ ".",
-        cell == "." & left_cell == ">" ~ ">",
+        cell == ">" & right_cell == "." ~ ".", # Outgoing movement
+        cell == "." & left_cell == ">" ~ ">",  # Incoming movement
         TRUE ~ cell
       )
     )
@@ -59,6 +67,7 @@ move_down<- function(input) {
     )
 }
 
+# Testing to ensure this implementation is adequately fast
 bench::mark(
   move_right(test_25),
   move_right(input_25),
@@ -80,6 +89,8 @@ plot_cucumber(test_25)
 plot_cucumber(move_right(test_25))
 plot_cucumber(input_25)
 
+# To solve part a, we just iterate the movement until nothing changes
+
 q25a <- function(input) {
   old <- input
   grids <- list(input)
@@ -97,6 +108,8 @@ q25a <- function(input) {
 test_out <- q25a(test_25)
 input_out <- q25a(input_25)
 length(input_out) - 1
+
+# And we can even make a gif of how everything moves!
 
 library(gganimate)
 
